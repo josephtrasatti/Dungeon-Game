@@ -1,9 +1,11 @@
 import pygame
+import random
+import math
 
 pygame.init()
 
-display_width = 400
-display_height = 300
+display_width = 600
+display_height = 450
 character_width = 50
 
 projectile_height = 10
@@ -16,18 +18,29 @@ red = (255, 0, 0)
 blue = (0, 255, 0)
 green = (0, 0, 255)
 
-gameDisplay = pygame.display.set_mode((display_width, display_height))
+gameDisplay = pygame.display.set_mode((display_width, display_height), pygame.FULLSCREEN)
 pygame.display.set_caption('Dungeon Game')
 clock = pygame.time.Clock()
 personImg = pygame.image.load('/Users/joeytrasatti/desktop/drawings/robot.png')
-projectileImg = pygame.image.load(
-    '/Users/joeytrasatti/desktop/drawings/projectile.png')
+projectileImg = pygame.image.load('/Users/joeytrasatti/desktop/drawings/projectile.png')
 enemyImg = pygame.image.load('/Users/joeytrasatti/desktop/drawings/enemy.png')
 
 
 class enemy():
-    def __init__():
-        print('place holder')
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+
+    def move(self, char_x, char_y):
+        phi = (abs(char_x - self.x) / (abs(char_x - self.x) + abs(char_y - self.y))) / 2 * math.pi
+        if char_x != self.x:
+            self.x += int(math.sin(phi) * 4 * ((abs(char_x - self.x) / (char_x - self.x))))
+        if char_y != self.y:
+            self.y += int(math.cos(phi) * 4 * ((abs(char_y - self.y) / (char_y - self.y))))
+
+
+def mk_enemy(x, y):
+    gameDisplay.blit(enemyImg, (x, y))
 
 
 def character(x, y):
@@ -67,6 +80,7 @@ def game_loop():
     proj_right = False
     proj_up = False
     proj_down = False
+    enemy_stack = []
 
     while not game_exit:
         for event in pygame.event.get():
@@ -81,8 +95,8 @@ def game_loop():
                 if event.key == pygame.K_w:
                     y_change = -5
                 if event.key == pygame.K_s:
-                    # Projectile input
                     y_change = 5
+                # Projectile input
                 if event.key == pygame.K_RIGHT:
                     proj_right = True
                 if event.key == pygame.K_LEFT:
@@ -91,6 +105,9 @@ def game_loop():
                     proj_up = True
                 if event.key == pygame.K_DOWN:
                     proj_down = True
+                # exit condition
+                if event.key == pygame.K_ESCAPE:
+                    game_exit = True
 
             if event.type == pygame.KEYUP:
                 if event.key == pygame.K_a or event.key == pygame.K_d:
@@ -109,34 +126,41 @@ def game_loop():
         x += x_change
         y += y_change
         # Add 'Last proj' timer so that a proj can only be sent out every 200 ms
-        if len(proj_stack) < 5:
+
+        if not proj_stack or pygame.time.get_ticks() - 400 > proj_stack[-1].start_time:
             if proj_right:
-                proj_stack.append(projectile(
-                    x, y, 'r', pygame.time.get_ticks()))
+                proj_stack.append(projectile(x, y, 'r', pygame.time.get_ticks()))
             elif proj_left:
-                proj_stack.append(projectile(
-                    x, y, 'l', pygame.time.get_ticks()))
+                proj_stack.append(projectile(x, y, 'l', pygame.time.get_ticks()))
             elif proj_up:
-                proj_stack.append(projectile(
-                    x, y, 'u', pygame.time.get_ticks()))
+                proj_stack.append(projectile(x, y, 'u', pygame.time.get_ticks()))
             elif proj_down:
-                proj_stack.append(projectile(
-                    x, y, 'd', pygame.time.get_ticks()))
+                proj_stack.append(projectile(x, y, 'd', pygame.time.get_ticks()))
 
         gameDisplay.fill(white)
 
         character(x, y)
         for proj in proj_stack:
             if pygame.time.get_ticks() - 1000 > proj.start_time:
-                proj_stack.pop()
+                proj_stack.pop(0)
             else:
                 proj.move()
                 mk_projectile(proj.x, proj.y)
 
-        # if x > display_width - character_width or x < 0:
-        #     game_exit = True
+        spawn_enemy = random.randint(0, 100)
+        if len(enemy_stack) < 3 and spawn_enemy == 1:
+            enemy_stack.append(enemy(random.randint(0, 599), random.randint(0, 449)))
+
+        for e in enemy_stack:
+            e.move(x, y)
+            mk_enemy(e.x, e.y)
 
         pygame.display.update()
+        # Check if the game is lost
+        for e in enemy_stack:
+            if e.x - 4 <= x <= e.x + 4 and e.y - 4 <= y <= e.y + 4:
+                game_exit = True
+
         clock.tick(30)
 
 

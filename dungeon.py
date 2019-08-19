@@ -32,7 +32,12 @@ class enemy():
         self.y = y
 
     def move(self, char_x, char_y):
-        phi = (abs(char_x - self.x) / (abs(char_x - self.x) + abs(char_y - self.y))) / 2 * math.pi
+        char_x += 25
+        char_y += 40
+        if char_x != self.x and char_y != self.y:
+            phi = (abs(char_x - self.x) / (abs(char_x - self.x) + abs(char_y - self.y))) / 2 * math.pi
+        else:
+            phi = 0
         if char_x != self.x:
             self.x += int(math.sin(phi) * 4 * ((abs(char_x - self.x) / (char_x - self.x))))
         if char_y != self.y:
@@ -158,7 +163,7 @@ def game_loop():
         pygame.display.update()
         # Check if the game is lost
         for e in enemy_stack:
-            if e.x - 4 <= x <= e.x + 4 and e.y - 4 <= y <= e.y + 4:
+            if e.x - 65 <= x <= e.x + 10 and e.y - 95 <= y <= e.y + 5:
                 game_exit = True
 
         clock.tick(30)

@@ -152,19 +152,31 @@ def game_loop():
                 proj.move()
                 mk_projectile(proj.x, proj.y)
 
-        spawn_enemy = random.randint(0, 100)
+        spawn_enemy = random.randint(0, 49)
         if len(enemy_stack) < 3 and spawn_enemy == 1:
-            enemy_stack.append(enemy(random.randint(0, 599), random.randint(0, 449)))
+            side_pick = random.randint(0, 3)
+            if side_pick == 0:
+                enemy_stack.append(enemy(x=random.randint(10, 60) * -1, y=random.randint(0, 449)))
+            elif side_pick == 1:
+                enemy_stack.append(enemy(x=random.randint(609, 659), y=random.randint(0, 449)))
+            elif side_pick == 2:
+                enemy_stack.append(enemy(x=random.randint(0, 599), y=random.randint(10, 60) * -1))
+            else:
+                enemy_stack.append(enemy(x=random.randint(0, 599), y=random.randint(459, 609)))
 
         for e in enemy_stack:
-            e.move(x, y)
-            mk_enemy(e.x, e.y)
+            if x - 15 <= e.x <= x + 65 and y - 15 <= e.y <= y + 90:
+                game_exit = True
+            else:
+                e.move(x, y)
+                mk_enemy(e.x, e.y)
 
         pygame.display.update()
-        # Check if the game is lost
-        for e in enemy_stack:
-            if e.x - 65 <= x <= e.x + 10 and e.y - 95 <= y <= e.y + 5:
-                game_exit = True
+
+        for proj in proj_stack:
+            for i, e in enumerate(enemy_stack):
+                if e.x <= proj.x <= e.x + 25 and e.y <= proj.y <= e.y + 25:
+                    enemy_stack.pop(i)
 
         clock.tick(30)
 

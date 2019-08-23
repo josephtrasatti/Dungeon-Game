@@ -86,6 +86,7 @@ def game_loop():
     proj_up = False
     proj_down = False
     enemy_stack = []
+    score = 0
 
     while not game_exit:
         for event in pygame.event.get():
@@ -175,8 +176,9 @@ def game_loop():
 
         for proj in proj_stack:
             for i, e in enumerate(enemy_stack):
-                if e.x <= proj.x <= e.x + 25 and e.y <= proj.y <= e.y + 25:
+                if e.x-8 <= proj.x <= e.x+33 and e.y-8 <= proj.y <= e.y+33:
                     enemy_stack.pop(i)
+                    score += 1
 
         clock.tick(30)
 

@@ -56,6 +56,22 @@ def mk_projectile(x, y):
     gameDisplay.blit(projectileImg, (x, y))
 
 
+def text_objects(text, font):
+    text_surface = font.render(text, True, black)
+    return text_surface, text_surface.get_rect()
+
+
+def message_display(text):
+    font_format = pygame.font.Font('freesansbold.ttf', 20)
+    text_surface, text_rectangle = text_objects(text, font_format)
+    text_rectangle.center = (120, 20)
+    gameDisplay.blit(text_surface, text_rectangle)
+
+
+def show_score(score, high_score):
+    message_display(f'Score: {score}, High Score: {high_score}')
+
+
 class projectile():
     def __init__(self, x, y, direction, start_time):
         self.x = x + 37
@@ -87,6 +103,7 @@ def game_loop():
     proj_down = False
     enemy_stack = []
     score = 0
+    score_scaling = [2, 3, 5, 7, 10, 15]
 
     while not game_exit:
         for event in pygame.event.get():
@@ -95,13 +112,13 @@ def game_loop():
 
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_a:
-                    x_change = -5
+                    x_change = -7
                 if event.key == pygame.K_d:
-                    x_change = 5
+                    x_change = 7
                 if event.key == pygame.K_w:
-                    y_change = -5
+                    y_change = -7
                 if event.key == pygame.K_s:
-                    y_change = 5
+                    y_change = 7
                 # Projectile input
                 if event.key == pygame.K_RIGHT:
                     proj_right = True
@@ -133,7 +150,7 @@ def game_loop():
         y += y_change
         # Add 'Last proj' timer so that a proj can only be sent out every 200 ms
 
-        if not proj_stack or pygame.time.get_ticks() - 400 > proj_stack[-1].start_time:
+        if not proj_stack or pygame.time.get_ticks() - 250 > proj_stack[-1].start_time:
             if proj_right:
                 proj_stack.append(projectile(x, y, 'r', pygame.time.get_ticks()))
             elif proj_left:
@@ -153,8 +170,19 @@ def game_loop():
                 proj.move()
                 mk_projectile(proj.x, proj.y)
 
-        spawn_enemy = random.randint(0, 49)
-        if len(enemy_stack) < 3 and spawn_enemy == 1:
+        spawn_enemy = random.randint(0, 10)
+        if score < 2:
+            max_enemies = score_scaling[0]
+        elif score < 5:
+            max_enemies = score_scaling[1]
+        elif score < 10:
+            max_enemies = score_scaling[2]
+        elif score < 20:
+            max_enemies = score_scaling[3]
+        elif score < 30:
+            max_enemies = score_scaling[4]
+
+        if len(enemy_stack) < max_enemies and spawn_enemy == 1:
             side_pick = random.randint(0, 3)
             if side_pick == 0:
                 enemy_stack.append(enemy(x=random.randint(10, 60) * -1, y=random.randint(0, 449)))
@@ -172,15 +200,24 @@ def game_loop():
                 e.move(x, y)
                 mk_enemy(e.x, e.y)
 
-        pygame.display.update()
-
         for proj in proj_stack:
             for i, e in enumerate(enemy_stack):
                 if e.x-8 <= proj.x <= e.x+33 and e.y-8 <= proj.y <= e.y+33:
                     enemy_stack.pop(i)
                     score += 1
+        with open('highscore.txt') as file:
+            high_score = int(file.readline())
 
+        if score > high_score:
+            high_score = score
+
+        show_score(score, high_score)
+        pygame.display.update()
         clock.tick(30)
+
+    if score >= high_score:
+        with open('highscore.txt', 'w+') as file:
+            file.write(str(score))
 
 
 game_loop()
